@@ -1,41 +1,35 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_NAME = 'nonweb-app'
-        CONTAINER_NAME = 'nonweb-container'
-    }
-
     stages {
-        stage('Clone Repo') {
+        stage('Checkout SCM') {
             steps {
-                git 'https://github.com/Bucky51/Improving-Collaboration-by-Integrating-Multiple-Tools.git'
+                git branch: 'main', url: 'https://github.com/Bucky51/Improving-Collaboration-by-Integrating-Multiple-Tools.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t %IMAGE_NAME% .'
+                bat 'docker build -t my-app-image .'
             }
         }
 
         stage('Run Docker Container') {
             steps {
                 bat '''
-                docker stop %CONTAINER_NAME% || echo "No running container"
-                docker rm %CONTAINER_NAME% || echo "No container to remove"
-                docker run --name %CONTAINER_NAME% %IMAGE_NAME%
+                docker rm -f flask-app || echo "No container to remove"
+                docker run -d --name flask-app -p 5000:5000 my-app-image
                 '''
             }
         }
     }
 
     post {
-        success {
-            echo '✅ Docker container executed successfully.'
-        }
         failure {
-            echo '❌ Something went wrong during execution.'
+            echo 'Build failed!'
+        }
+        success {
+            echo 'Build succeeded!'
         }
     }
 }
